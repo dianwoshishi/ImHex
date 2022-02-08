@@ -17,6 +17,7 @@ detectBadClone()
 set(PLUGINS
     builtin
     windows
+    heximage
 )
 
 # Add various defines

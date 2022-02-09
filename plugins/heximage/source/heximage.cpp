@@ -81,8 +81,6 @@ namespace hex::view::heximage
             
             luaconfig = LuaConfig::getLuaConfig();
             this->m_width = luaconfig->get_key_value<int>("image", "width");
-            this->min_width = luaconfig->get_key_value<int>("image", "min_width");
-            this->max_width = luaconfig->get_key_value<int>("image", "max_width");
 
             EventManager::subscribe<EventDataChanged>(this, [this]() {
                 this->m_shouldInvalidate = true;
@@ -178,8 +176,8 @@ namespace hex::view::heximage
         u64 m_hashRegion[2]         = { 0 };
         bool m_shouldMatchSelection = true;
         int m_width                 = 128;
-        int min_width         = 16;
-        int max_width         = 1024;
+        const int min_width         = 16;
+        const int max_width         = 1024;
         std::array<u8, N> buffer      =   {0}; //image buffer 
         std::shared_ptr<LuaConfig> luaconfig;
     };

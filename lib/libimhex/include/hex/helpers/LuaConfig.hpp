@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include <hex/helpers/paths.hpp>
+#include <hex/helpers/logger.hpp>
 
 
 // curl -R -O http://www│
@@ -22,24 +23,38 @@ public:
 
     static std::shared_ptr<LuaConfig> getLuaConfig();
 
-    // void print() {
-    //     std::cout << "Hello World." << std::endl;
-    // }
-
-    ~LuaConfig() {
-        // std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
+    ~LuaConfig() { }
     template<class T>
-    const T get_key_value(const char *dict, const char* key){
-        return static_cast<T>(state[dict][key]);
+    const T get_key_value(const char *dict, const char* key) {
+        try
+        {
+            return static_cast<T>(state[dict][key]);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+            hex::log::fatal(std::string(e.what()));
+            exit(EXIT_FAILURE);
+        }
+        
     }
 private:
 
     LuaConfig() {
         std::string path = hex::getExecutablePath() ;
         path += std::string("/config.lua");
-        // printf(path.c_str());
-        state.Load(path);
+        try
+        {
+            state.Load(path);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+            hex::log::fatal(std::string(e.what()));
+            exit(EXIT_FAILURE);
+        }
+        
+        
     }
     sel::State state;
 };

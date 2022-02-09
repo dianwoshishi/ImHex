@@ -21,9 +21,7 @@
 [submodule "lib/external/capstone"]
 	path = lib/external/capstone
 	url = https://github.com/capstone-engine/capstone
+	branch = next
 [submodule "lib/external/libromfs"]
 	path = lib/external/libromfs
 	url = https://github.com/WerWolv/libromfs
-[submodule "lib/external/selene"]
-	path = lib/external/selene
-	url = https://github.com/dianwoshishi/Selene.git

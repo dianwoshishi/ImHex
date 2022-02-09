@@ -8,7 +8,8 @@ build*/
 
 *.mgc
 imgui.ini
-.DS_Store
+*/*/.DS_Store
 plugins/.rustc_info.json
 
 **/target
+.DS_Store

@@ -8,10 +8,14 @@ add_library(${PROJECT_NAME} SHARED
         source/heximage.cpp
 )
 
+set( PROJECT_LINK_LIBS
+        stdc++
+)
+
 # Add additional include directories here #
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 # Add additional libraries here #
-target_link_libraries(${PROJECT_NAME} PRIVATE libimhex)
+target_link_libraries(${PROJECT_NAME} PRIVATE libimhex ${PROJECT_LINK_LIBS})
 
 
 

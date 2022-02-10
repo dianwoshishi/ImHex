@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include <hex/plugin.hpp>
 #include <hex/api/content_registry.hpp>
 #include <hex/ui/view.hpp>
@@ -10,11 +11,14 @@
 
 #include <hex/helpers/paths.hpp>
 
+#include <imgui_memory_editor.h>
+
 namespace hex::view::heximage
 {
     class BMP {
     public:
-        static unsigned char *Array2ImageArray(unsigned char *inputImg, int width, int height, int *ouputSize) {
+        // rewrite from https://www.cnblogs.com/ipersevere/p/12756048.html
+        virtual unsigned char *Array2ImageArray(unsigned char *inputImg, int width, int height, int *ouputSize){
 
             /*create a bmp format file*/
             int bitmap_x = (int)ceil((double)width * 3 / 4) * 4;
@@ -55,7 +59,7 @@ namespace hex::view::heximage
             free(bitmap);
             return bitmap;
         }
-        static void Array2ImageFile(unsigned char* inputImg, int width, int height, char* outFilename) {
+        virtual void Array2ImageFile(unsigned char* inputImg, int width, int height, char* outFilename){
             int size = 0;
             unsigned char *bmp = Array2ImageArray(inputImg, width, height, &size);
             FILE *fp = fopen(outFilename, "wb+");
@@ -67,7 +71,7 @@ namespace hex::view::heximage
             free(bmp);
         }
     private:
-        static void write_bmpheader(unsigned char *bitmap, int offset, int bytes, int value) {
+        void write_bmpheader(unsigned char *bitmap, int offset, int bytes, int value) {
             int i;
             for (i = 0; i < bytes; i++)
                 bitmap[offset + i] = (value >> (i << 3)) & 0xFF;
@@ -92,6 +96,7 @@ namespace hex::view::heximage
                     this->m_shouldInvalidate = true;
                 }
             });
+            
         }
         ~ViewHexImage() override { 
             EventManager::unsubscribe<EventDataChanged>(this);
@@ -100,7 +105,6 @@ namespace hex::view::heximage
 
         void drawContent() override {
             
-            ImGui::ShowDemoWindow();
             if (ImGui::Begin("HexImage")) {
                 auto provider = ImHexApi::Provider::get();
                 if (ImHexApi::Provider::isValid() && provider->isAvailable()) {
@@ -144,7 +148,11 @@ namespace hex::view::heximage
 
 
                     int ouputSize = 0;
-                    BMP::Array2ImageArray(buffer.data(), width, height, &ouputSize);
+                    image.Array2ImageArray(buffer.data(), width, height, &ouputSize);
+
+                    // ImGui::Text("I am a fancy tooltip");
+                    // static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
+                    // ImGui::PlotLines("Curve", arr, IM_ARRAYSIZE(arr));
                     
 
                     ImGui::Texture Texture_ID = ImGui::LoadImageFromMemory(reinterpret_cast<const ImU8 *>(buffer.data()), ouputSize);
@@ -158,13 +166,47 @@ namespace hex::view::heximage
                     ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
                     ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
                     ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGuiIO& io = ImGui::GetIO();
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImGui::Image(Texture_ID, ImVec2(width, height), uv_min, uv_max, tint_col, border_col);
+                    if (ImGui::IsItemHovered())
+                    {
+                        float my_tex_w = width;
+                        float my_tex_h = height;
+                        ImGui::BeginTooltip();
+                        float region_sz = 16.0f;
+                        float region_x = io.MousePos.x - pos.x - region_sz * 0.5f;
+                        float region_y = io.MousePos.y - pos.y - region_sz * 0.5f;
+                        float zoom = 8.0f;
+                        if (region_x < 0.0f) { region_x = 0.0f; }
+                        else if (region_x > my_tex_w - region_sz) { region_x = my_tex_w - region_sz; }
+                        if (region_y < 0.0f) { region_y = 0.0f; }
+                        else if (region_y > my_tex_h - region_sz) { region_y = my_tex_h - region_sz; }
+                        ImGui::Text("Min: (%.2f, %.2f)", region_x, region_y);
+                        ImGui::Text("Max: (%.2f, %.2f)", region_x + region_sz, region_y + region_sz);
+                        ImVec2 uv0 = ImVec2((region_x) / my_tex_w, (region_y) / my_tex_h);
+                        ImVec2 uv1 = ImVec2((region_x + region_sz) / my_tex_w, (region_y + region_sz) / my_tex_h);
+                        ImGui::Image(Texture_ID, ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, tint_col, border_col);
+                        
+                        region_x = io.MousePos.x - pos.x;
+                        region_y = io.MousePos.y - pos.y;
+                        ImGui::Text("image: (%.2f, %.2f)", region_x, region_y);
+
+                        u64 current_data_start = region_y * width + region_x;
+                        ImGui::Text("data start (%d)", current_data_start);
+                        
+                        ImGui::EndTooltip();                        
+
+                        EventManager::post<RequestSelectionChange>(Region { current_data_start, 1024*1024 });
+                    }
+
                 }
 
             }
             ImGui::End();    
         }
     private:
+
         bool m_shouldInvalidate     = true;
         u64 m_hashRegion[2]         = { 0 };
         bool m_shouldMatchSelection = true;
@@ -173,6 +215,8 @@ namespace hex::view::heximage
         const int max_width         = 1024;
         const static int N = (1024 * 1024 * 2 + 54); //buffer + image header 
         std::array<u8, N> buffer      =   {0}; //image buffer            
+        hex::view::heximage::BMP image;
+        static MemoryEditor mem_edit_1;
     };
     IMHEX_PLUGIN_SETUP("HexImage", "dianwoshishi", "Convert Hex to Image!") {
         hex::ContentRegistry::Views::add<ViewHexImage>();

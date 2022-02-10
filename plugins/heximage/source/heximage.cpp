@@ -12,15 +12,9 @@
 
 namespace hex::view::heximage
 {
-    class bmp{
+    class BMP {
     public:
-        static void write_bmpheader(unsigned char *bitmap, int offset, int bytes, int value) {
-            int i;
-            for (i = 0; i < bytes; i++)
-                bitmap[offset + i] = (value >> (i << 3)) & 0xFF;
-        }
-
-        static unsigned char *convertToBmp(unsigned char *inputImg, int width, int height, int *ouputSize) {
+        static unsigned char *Array2ImageArray(unsigned char *inputImg, int width, int height, int *ouputSize) {
 
             /*create a bmp format file*/
             int bitmap_x = (int)ceil((double)width * 3 / 4) * 4;
@@ -61,26 +55,27 @@ namespace hex::view::heximage
             free(bitmap);
             return bitmap;
         }
-
-        static void saveToBmp(unsigned char *inputImg, int width, int height, char *outputFileName) {
+        static void Array2ImageFile(unsigned char* inputImg, int width, int height, char* outFilename) {
             int size = 0;
-            unsigned char *bmp = convertToBmp(inputImg, width, height, &size);
-            FILE *fp = fopen(outputFileName, "wb+");
+            unsigned char *bmp = Array2ImageArray(inputImg, width, height, &size);
+            FILE *fp = fopen(outFilename, "wb+");
             if (fp == NULL) {
-                printf("Could not open file: %s", outputFileName);
+                printf("Could not open file: %s", outFilename);
             }
             fwrite(bmp, 1, size, fp);
             fclose(fp);
             free(bmp);
         }
+    private:
+        static void write_bmpheader(unsigned char *bitmap, int offset, int bytes, int value) {
+            int i;
+            for (i = 0; i < bytes; i++)
+                bitmap[offset + i] = (value >> (i << 3)) & 0xFF;
+        }
     };
     class ViewHexImage : public hex::View {
-        #define N (1024 * 1024 * 2 + 54) //buffer + image header 
     public:
         ViewHexImage() : hex::View("HexImage") {
-            
-            luaconfig = LuaConfig::getLuaConfig();
-            this->m_width = luaconfig->get_key_value<int>("image", "width");
 
             EventManager::subscribe<EventDataChanged>(this, [this]() {
                 this->m_shouldInvalidate = true;
@@ -149,11 +144,13 @@ namespace hex::view::heximage
 
 
                     int ouputSize = 0;
-                    hex::view::heximage::bmp::convertToBmp(buffer.data(), width, height, &ouputSize);
+                    BMP::Array2ImageArray(buffer.data(), width, height, &ouputSize);
+                    
 
                     ImGui::Texture Texture_ID = ImGui::LoadImageFromMemory(reinterpret_cast<const ImU8 *>(buffer.data()), ouputSize);
                     if (Texture_ID == nullptr) {
                         log::fatal("Could not load image from bmp array!");
+                        ImGui::Text("Could not load image from bmp array!");
                         exit(EXIT_FAILURE);
                     }
 
@@ -168,18 +165,14 @@ namespace hex::view::heximage
             ImGui::End();    
         }
     private:
-
-
-
         bool m_shouldInvalidate     = true;
-        int m_currHashFunction      = 0;
         u64 m_hashRegion[2]         = { 0 };
         bool m_shouldMatchSelection = true;
         int m_width                 = 128;
         const int min_width         = 16;
         const int max_width         = 1024;
-        std::array<u8, N> buffer      =   {0}; //image buffer 
-        std::shared_ptr<LuaConfig> luaconfig;
+        const static int N = (1024 * 1024 * 2 + 54); //buffer + image header 
+        std::array<u8, N> buffer      =   {0}; //image buffer            
     };
     IMHEX_PLUGIN_SETUP("HexImage", "dianwoshishi", "Convert Hex to Image!") {
         hex::ContentRegistry::Views::add<ViewHexImage>();

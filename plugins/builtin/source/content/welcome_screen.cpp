@@ -7,8 +7,6 @@
 #include <hex/helpers/paths.hpp>
 #include <hex/helpers/logger.hpp>
 
-#include <hex/helpers/LuaConfig.hpp>
-
 #include <hex/helpers/project_file_handler.hpp>
 
 #include <imgui.h>
@@ -116,8 +114,7 @@ namespace hex::plugin::builtin {
             ImGui::TableNextColumn();
 
 
-            std::string imhex_desc = LuaConfig::getLuaConfig()->get_key_value<std::string>("welcome_screen", "desc");
-            ImGui::TextFormattedWrapped(imhex_desc);
+            ImGui::TextFormattedWrapped("A Hex Editor for Reverse Engineers, Programmers and people who value their retinas when working at 3 AM.");
 
             ImGui::TableNextRow(ImGuiTableRowFlags_None, ImGui::GetTextLineHeightWithSpacing() * 6);
             ImGui::TableNextColumn();

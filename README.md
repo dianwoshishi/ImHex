@@ -1,3 +1,23 @@
+---
+# HexImage
+
+HexImage is a plugin for the ImHex.
+
+It can be used to check the input binary's texture, which can be used to analysis the binary's properties, such as malware classification.
+
+
+
+![preview](https://pic4.zhimg.com/v2-e885837d0cd336e755b287d0929f93f3_r.jpg)
+
+
+
+Video can be found here:
+
+ https://www.zhihu.com/zvideo/1474751649852256256
+
+
+
+
 <a href="https://imhex.werwolv.net"><h1 align="center" >:mag: ImHex</h1></a>
 
 <p align="center">A Hex Editor for Reverse Engineers, Programmers and people who value their retinas when working at 3 AM.</p>
@@ -109,6 +129,7 @@ The custom C-like Pattern Language developed and used by ImHex is easy to read, 
 ## Plugin development
 
 To develop plugins for ImHex, use one of the following two templates projects to get startet. You then have access to the entirety of libimhex as well as the ImHex API and the Content Registry to interact with ImHex or to add new content.
+
 - [C++ Plugin Template](https://github.com/WerWolv/ImHex-Cpp-Plugin-Template)
 - [Rust Plugin Template](https://github.com/WerWolv/ImHex-Rust-Plugin-Template)
 
@@ -176,6 +197,7 @@ make -j
 Install the ImHex executable as well as libimhex.dylib to wherever ImHex should be installed.
 
 All other files belong in `~/Library/Application Support/imhex`:
+
 ```
 Patterns: ~/Library/Application Support/imhex/patterns
 Pattern Includes: ~/Library/Application Support/imhex/includes

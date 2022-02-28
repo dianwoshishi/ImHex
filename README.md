@@ -1,4 +1,3 @@
----
 # HexImage
 
 HexImage is a plugin for the ImHex.
